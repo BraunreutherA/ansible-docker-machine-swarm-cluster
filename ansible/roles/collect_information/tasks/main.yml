@@ -13,16 +13,18 @@
     - "{{ cluster_masters }}"
     - "{{ cluster_machines }}"
 
-- debug: msg="{{ item.0.stdout }}  {{ item.1.stdout }}"
+- debug: msg="{{ item.0.stdout }}  {{ item.1.stdout }} {{ item.2.isMaster }}"
   with_together:
     - "{{ dockerips.results }}"
     - "{{ sshkeys.results }}"
+    - "{{ cluster_masters + cluster_machines }}"
 
 - name: Generate inventory file ...
-  add_host: name="{{ item.0.stdout }}" groups=cluster ansible_ssh_user={{ user }} ansible_ssh_private_key_file="{{ item.1.stdout }}"
+  add_host: name="{{ item.0.stdout }}" groups=cluster ansible_ssh_user="{{ user }}" ansible_ssh_private_key_file="{{ item.1.stdout }}" is_master="{{item.2.isMaster}}" machine_name="{{ item.2.name }}"
   with_together:
     - "{{ dockerips.results }}"
     - "{{ sshkeys.results }}"
+    - "{{ cluster_masters + cluster_machines }}"
 
 - debug: msg="{{ item }}"
   with_items: groups['cluster']

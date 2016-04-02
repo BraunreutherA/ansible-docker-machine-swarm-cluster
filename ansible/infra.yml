@@ -4,3 +4,8 @@
     - hosts/server_list.yml
   roles:
     - collect_information
+
+- hosts: cluster
+  sudo: yes
+  roles:
+    - consul

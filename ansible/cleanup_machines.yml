@@ -1,4 +1,4 @@
 - hosts: localhost
   tasks:
     - name: Cleaning up old docker machines ...
-      shell: docker-machine rm $(docker-machine ls -q)
+      shell: docker-machine rm -y $(docker-machine ls -q)

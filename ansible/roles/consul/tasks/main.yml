@@ -1,18 +1,29 @@
-#- name: Directories are created
-#  file:
-#    path: "{{ item }}"
-#    state: directory
-#  with_items: directories
-#  tags: [consul]
-#
-#- name: Files are copied
-#  copy:
-#    src: "{{ item.src }}"
-#    dest: "{{ item.dest }}"
-#    mode: "{{ item.mode }}"
-#  with_items: files
-#  tags: [consul]
-#
+- name: Debian python-pip is present
+  apt: name=python-pip state=present
+  tags: [docker]
+
+- name: Debian docker-py is present
+  pip:
+    name: docker-py
+    version: 1.6.0
+    state: present
+  tags: [docker]
+
+- name: Create directories needed by Consul ...
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items: directories
+  tags: [consul]
+
+- name: Copy files needed by Consul ...
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  with_items: files
+  tags: [consul]
+
 #- name: Is running
 #  shell: "nohup consul agent {{ consul_extra }} \
 #    -ui-dir /data/consul/ui \
@@ -29,14 +40,38 @@
 #  when: consul_server_ip is defined
 #  tags: [consul]
 
-- name: Container is running
+- debug: msg={{ machine_name }}
+
+# TODO at command
+
+- name: Run Consul master container ...
   docker:
-    image: progrium/consul
-    name: consul
-    hostname: "{{ ansible_hostname }}"
-    ports:
-      - 8300:8300
-      - 8301:8301
-      - 8301:8301/udp
-      - 8500:8500
-    command: -advertise {{ facter_ipaddress_eth1 }} {{ consul_extra }}
+    image: gliderlabs/consul-server:0.6
+    name: consul-agent-server
+    restart_policy: always
+    net: host
+    volumes:
+      - "consul-agent-{{ machine_name }}:/data/consul/data"
+      - "/etc/consul/consul.json:/data/consul/config/consul.json:ro"
+      - "/etc/docker/ca.pem:/certs/ca.pem:ro"
+      - "/etc/docker/server.pem:/certs/server.pem:ro"
+      - "/etc/docker/server-key.pem:/certs/server-key.pem:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    command: -server -bootstrap -advertise {{ ip }} -retry-interval 10s #-bootstrap-expect 3 TODO make HA with 3 consul nodes -retry-join {{ cluster_masters[0].ip }} -retry-join ${MACHINE_CLUSTER_REPLICANT_ADDRESS_2} TODO HA config -dc ${MACHINE_DATACENTER} TODO datacenter config -domain {{ domain }}.
+  when: is_master
+
+- name: Run Consul agent container ...
+  docker:
+    image: gliderlabs/consul-server:0.6
+    name: consul-agent-server
+    restart_policy: always
+    net: host
+    volumes:
+      - "consul-agent-{{ machine_name }}:/data/consul/data"
+      - "/etc/consul/consul.json:/data/consul/config/consul.json:ro"
+      - "/etc/docker/ca.pem:/certs/ca.pem:ro"
+      - "/etc/docker/server.pem:/certs/server.pem:ro"
+      - "/etc/docker/server-key.pem:/certs/server-key.pem:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    command: -advertise {{ ip }} -retry-interval 10s # -retry-join {{ cluster_masters[0].ip }} -retry-join ${MACHINE_CLUSTER_REPLICANT_ADDRESS_2} TODO HA config -dc ${MACHINE_DATACENTER} TODO datacenter config -domain {{ domain }}.
+  when: not is_master
