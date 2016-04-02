@@ -1,0 +1,7 @@
+---
+cluster_masters:
+  - {name: "swarm-master-1", ip: "10.100.192.200", ssh_key_file: "../.vagrant/machines/swarm-master/virtualbox/private_key", extras: ""}
+
+cluster_machines:
+  - {name: "swarm-node-1", ip: "10.100.192.201", ssh_key_file: "../.vagrant/machines/swarm-node-1/virtualbox/private_key", extras: ""}
+  - {name: "swarm-node-2", ip: "10.100.192.202", ssh_key_file: "../.vagrant/machines/swarm-node-2/virtualbox/private_key", extras: ""}

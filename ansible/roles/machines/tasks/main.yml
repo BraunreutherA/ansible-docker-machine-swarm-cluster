@@ -1,0 +1,47 @@
+---
+- name: Setting up swarm masters ...
+  shell: docker-machine create --driver generic \
+        --engine-opt "cluster-advertise {{ cluster_interface }}:2376" \
+        --engine-opt "cluster-store consul://consul.service.{{ domain }}" \
+        --engine-opt "dns {{ item.ip }}" \
+        --engine-opt "dns-search {{ domain }}" \
+        --engine-opt "log-driver json-file" \
+        --engine-opt "log-opt max-file=10" \
+        --engine-opt "log-opt max-size=10m" \
+        --generic-ssh-user {{ user }} \
+        --generic-ssh-key {{ item.ssh_key_file }} \
+        --generic-ip-address {{ item.ip }} \
+        --swarm \
+        --swarm-discovery "consul://consul.service.{{ domain }}"
+        --tls-san {{ item.name }}.node.{{ domain }} \
+        --tls-san {{ item.ip }} \
+        --tls-san {{ item.ip }} \
+        {{ item.extras }} \
+        --swarm-master \
+        --swarm-opt replication \
+        --swarm-opt advertise={{ item.ip }}:3376 \
+        {{ item.name }}
+  with_items: "{{ cluster_masters }}"
+  tags: [machines]
+
+- name: Setting up swarm nodes ...
+  shell: docker-machine create --driver generic \
+        --engine-opt "cluster-advertise {{ cluster_interface }}:2376" \
+        --engine-opt "cluster-store consul://{{ consul_server_ip }}" \
+        --engine-opt "dns {{ item.ip }}" \
+        --engine-opt "dns-search {{ domain }}" \
+        --engine-opt "log-driver json-file" \
+        --engine-opt "log-opt max-file=10" \
+        --engine-opt "log-opt max-size=10m" \
+        --generic-ssh-user {{ user }} \
+        --generic-ssh-key {{ item.ssh_key_file }} \
+        --generic-ip-address {{ item.ip }} \
+        --swarm \
+        --swarm-discovery "consul://{{ consul_server_ip }}" \
+        --tls-san {{ item.name }}.node.{{ domain }} \
+        --tls-san {{ item.ip }} \
+        --tls-san {{ item.ip }} \
+        {{ item.extras }} \
+        {{ item.name }}
+  with_items: "{{ cluster_machines }}"
+  tags: [machines]

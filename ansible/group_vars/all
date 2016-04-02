@@ -1,0 +1,4 @@
+consul_server_ip: 10.100.192.200
+domain: example.com
+cluster_interface: eth1
+user: vagrant

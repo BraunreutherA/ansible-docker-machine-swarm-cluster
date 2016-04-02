@@ -1,0 +1,28 @@
+---
+- name: Collect docker machine ips ...
+  shell: "docker-machine ip {{ item.name }}"
+  register: dockerips
+  with_items:
+    - "{{ cluster_masters }}"
+    - "{{ cluster_machines }}"
+
+- name: Collect docker-machine ssh keys ...
+  shell: "docker-machine inspect --format=''{''{.Driver.SSHKeyPath''}''} {{ item.name }}"
+  register: sshkeys
+  with_items:
+    - "{{ cluster_masters }}"
+    - "{{ cluster_machines }}"
+
+- debug: msg="{{ item.0.stdout }}  {{ item.1.stdout }}"
+  with_together:
+    - "{{ dockerips.results }}"
+    - "{{ sshkeys.results }}"
+
+- name: Generate inventory file ...
+  add_host: name="{{ item.0.stdout }}" groups=cluster ansible_ssh_user={{ user }} ansible_ssh_private_key_file="{{ item.1.stdout }}"
+  with_together:
+    - "{{ dockerips.results }}"
+    - "{{ sshkeys.results }}"
+
+- debug: msg="{{ item }}"
+  with_items: groups['cluster']
