@@ -1,6 +1,6 @@
 ---
 - name: Setting up swarm masters ...
-  shell: docker-machine create --driver generic \
+  shell: docker-machine ls | grep {{ item.name }} || docker-machine create --driver generic \
         --engine-opt "cluster-advertise {{ cluster_interface }}:2376" \
         --engine-opt "cluster-store consul://consul.service.{{ domain }}" \
         --engine-opt "dns {{ item.ip }}" \
@@ -25,7 +25,7 @@
   tags: [machines]
 
 - name: Setting up swarm nodes ...
-  shell: docker-machine create --driver generic \
+  shell: docker-machine ls | grep {{ item.name }} || docker-machine create --driver generic \
         --engine-opt "cluster-advertise {{ cluster_interface }}:2376" \
         --engine-opt "cluster-store consul://{{ consul_server_ip }}" \
         --engine-opt "dns {{ item.ip }}" \
