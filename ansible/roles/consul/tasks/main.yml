@@ -63,7 +63,7 @@
 - name: Run Consul agent container ...
   docker:
     image: gliderlabs/consul-server:0.6
-    name: consul-agent-server
+    name: consul-agent
     restart_policy: always
     net: host
     volumes:
@@ -73,5 +73,5 @@
       - "/etc/docker/server.pem:/certs/server.pem:ro"
       - "/etc/docker/server-key.pem:/certs/server-key.pem:ro"
       - "/var/run/docker.sock:/var/run/docker.sock"
-    command: -advertise {{ ip }} -retry-interval 10s # -retry-join {{ cluster_masters[0].ip }} -retry-join ${MACHINE_CLUSTER_REPLICANT_ADDRESS_2} TODO HA config -dc ${MACHINE_DATACENTER} TODO datacenter config -domain {{ domain }}.
+    command: -advertise {{ ip }} -retry-interval 10s -join {{ consul_server_ip }} # -retry-join ${MACHINE_CLUSTER_REPLICANT_ADDRESS_2} TODO HA config -dc ${MACHINE_DATACENTER} TODO datacenter config -domain {{ domain }}.
   when: not is_master
